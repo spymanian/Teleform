@@ -140,6 +140,7 @@ venv.bak/
 
 #audio
 *.mp3
+*.m4a
 
 # mypy
 .mypy_cache/
