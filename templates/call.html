@@ -8,11 +8,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='dist/css/output.css') }}">
     <script>
         async function getStatus() {
-            const response = await fetch('/get_status?call_id={{ call_id }}');
+            const response = await fetch('/call_status?call_id={{ call_id }}');
             if (response.ok) {
                 const data = await response.json();
                 document.getElementById('status').innerText = data.status;
                 document.getElementById('transcript').innerText = data.transcript;
+                document.getElementById('summary').innerText = data.analysis;
+
             }
         }
 
@@ -29,7 +31,11 @@
         </div>
         <div class="mt-6">
             <h3 class="text-xl text-gray-800">Transcript:</h3>
-            <p id="transcript" class="text-gray-600">Waiting for call details...</p>
+            <p id="transcript" class="text-gray-600">Waiting for call...</p>
+        </div>
+        <div class="mt-6">
+            <h3 class="text-xl text-gray-800">Summary:</h3>
+            <p id="summary" class="text-gray-600">Waiting for call...</p>
         </div>
     </main>
 </body>

@@ -1,5 +1,15 @@
 from flask import Flask, render_template, request, url_for, redirect
 from datetime import datetime
+import requests
+import os
+import dotenv
+
+dotenv.load_dotenv()
+
+
+VAPI_AUTH_TOKEN = os.environ["AUTH_TOKEN"]
+VAPI_PHONE_ID = os.environ["PHONE_ID"]
+VAPI_BASE_URL = "https://api.vapi.ai"
 
 app = Flask(__name__)
 BUSINESSES = {
@@ -94,6 +104,13 @@ Report blocked driveway or illegal parking Tell us where the problem is so we ca
 
 call_to_user_request = {}
 
+vapi_session = requests.Session()
+
+vapi_session.headers.update({
+    'Authorization': f'Bearer {VAPI_AUTH_TOKEN}',
+    'Content-Type': 'application/json',
+})
+
 @app.route("/")
 @app.route("/index")
 def index():
@@ -104,8 +121,31 @@ def make_call():
     business = request.form['business']
     phone_number = request.form['phone']
 
-    print("Make the call to vapi here")
-    call_id = "1234"
+    prompt = BUSINESSES[business]['prompt']
+
+    response = vapi_session.post(VAPI_BASE_URL + "/call/phone", json={
+        'assistant': {
+            "model": {
+                "provider": "openai",
+                "model": "gpt-4o",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": prompt,
+                    }
+                ]
+            },
+            "voice": "jennifer-playht"
+        },
+        'phoneNumberId': VAPI_PHONE_ID,
+        'customer': {
+            'number': phone_number,
+        },         
+    })
+
+    call_id = response.json()['id']
+
+    print(f"Made a call with {call_id} to {phone_number}")
 
     call_to_user_request[call_id] = {
         "business": business,
@@ -128,10 +168,16 @@ def call_page():
 @app.route('/call_status')
 def get_status():
     call_id = request.args.get('call_id')
-    print("Get the actual call status from vapi here")
+
+    response = vapi_session.get(VAPI_BASE_URL + "/call/" + call_id)
+    call = response.json()      
+
+    analysis = call.get("analysis", {}).get("summary") or "Waiting for call..."
+        
     return {
-        "status": "queued",
-        "transcript": "This is a test transcript " + str(datetime.now()),
+        "status": call['status'].replace('-', " ").capitalize(),
+        "transcript": call.get("transcript", "Waiting for call..."),
+        "analysis": analysis,
     }
 
 
