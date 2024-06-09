@@ -35,6 +35,5 @@ tqdm==4.66.4
 twilio==9.1.1
 typing_extensions==4.12.2
 urllib3==2.2.1
-vapi-python==0.1.9
 Werkzeug==3.0.3
 yarl==1.9.4
